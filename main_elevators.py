@@ -59,7 +59,6 @@ while finish:
             click_position = event.pos
     if click_position:
         builder.move(screen, click_position)
-        pygame.mixer.Sound.play(ding_sound)
         pygame.display.flip()            
                  
   
