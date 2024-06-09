@@ -11,8 +11,8 @@ pygame.init()
 # while not 0 < num_elevators <= 10 :
 #     num_floors = int(input(" please choose a number between 0 and 30:"))
   
-num_floors = 7
-num_elevators = 3
+num_floors = 15
+num_elevators = 6
 
 
 # def_colors
@@ -35,34 +35,25 @@ pygame.display.set_caption("elevator game")
 screen = pygame.display.set_mode((width, height))
 screen.fill(color)
 
-# floors = [Floor(i, height - (i + 1) * (height + 7)) for i in range(num_floors)]
-# elevators = [Elevator(i, 200 + i * 50) for i in range(num_elevators)]
-
-
-
-
-
+#build_the_building
 builder = Building(num_floors, num_elevators)  
 builder.build_floors(screen, height)  
 builder.build_elevators(screen, height)    
 
-# pygame.mouse.get_pos()
 click_position = None
+new_click = None
 
 # screen_loop
-finish = True
-while finish:
+game = True
+while game:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            finish = False
+            game = False
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             click_position = event.pos
+            new_click = True
     if click_position:
-        builder.move(screen, click_position)
-        pygame.display.flip()            
-                 
-  
-        
-
-
-pygame.quit()
+        finished = builder.move(screen, click_position, new_click)
+        new_click = False
+        pygame.display.flip()   
+        if finished: click_position = None

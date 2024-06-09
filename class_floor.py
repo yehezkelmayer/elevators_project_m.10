@@ -1,5 +1,6 @@
 import pygame
 pygame.init()
+from class_elevator import Elevator
 
 
 
@@ -13,21 +14,10 @@ class Floor():
         self.clock = 0
         self.rect = None
         self.y = None
-        self.image = None
+        self.timer = None
         
         
-    def get_number(self):
-        return self.floor_number
-    
-
-
-    def set_number(self):
-        if not self.floor_number():
-            self.floor_number = 0
-        else:
-            self.floor_number += 1    
-            
-
+      
     def init_floor(self, screen, floor_location, floor_num):
         
         pygame.draw.line(screen,(0, 0, 0), [40, floor_location - 4], [190, floor_location - 4], width=7)
@@ -49,7 +39,7 @@ class Floor():
         font = pygame.font.Font(None, 25)
         text = font.render(f"{floor_num}", True, (250, 250, 250))
         screen.blit(text, (111, floor_location + 10))  
-
+        # self.timer(screen, 2)
         
         
         pygame.display.flip()
@@ -58,5 +48,8 @@ class Floor():
         return f'{self.floor_number}'
 
 
-
-
+    # def show_timer(self, screen, elevator):
+    #     if elevator.timer == True:
+    #         font = pygame.font.Font(None, 25)
+    #         text = font.render(f"{elevator.time_to_arrival:.1f}", True, (250, 250, 250))
+    #         screen.blit(text, (11, self.y + 10))

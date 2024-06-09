@@ -2,81 +2,126 @@ import pygame
 from class_floor import Floor
 from class_elevator import Elevator
 
-image_floor = '/home/mefathim/Documents/Pasted image (3).png'
-image_elevator = '/home/mefathim/Documents/elv.png'
-speed =  1 / 5
-green = (0, 255, 0)
+# Initialize pygame
+pygame.init()
+
+# Constants
+speed = 1
+green = (10, 240, 10)
+red = (255, 0, 0)
 color = (50, 180, 100)
 ding_sound = pygame.mixer.Sound('ding.mp3')
-class Building():
-    def __init__(self, num_of_floors, num_of_elevators) -> None:
-        
-        self.__floors = []
-        for i in range (num_of_floors + 1):
-            self.__floors.append(Floor(i))
-        
-        self.__elevator = []
-        for i in range (num_of_elevators):
-            self.__elevator.append(Elevator(i))
-        
-        
-       
+elevator = None
+
+
+class Building:
+    def __init__(self, num_of_floors, num_of_elevators):
+        self.floors = [Floor(i) for i in range(num_of_floors + 1)]
+        self.elevators = [Elevator(i) for i in range(num_of_elevators)]
+        self.current_elevator = None
+        self.current_floor = None
+
+
     def build_floors(self, screen, height):
         current_height = height
-        for floor in self.__floors:
+        for floor in self.floors:
             floor.init_floor(screen, current_height - 70, floor)
             current_height -= 37
     
-    
-    def build_elevators(self, screen, height, a =200):   
-        for elevator in self.__elevator:
-            elevator.init_elevator(screen, height-70, a)  
+    def build_elevators(self, screen, height, a=200):   
+        for elevator in self.elevators:
+            elevator.init_elevator(screen, height - 70, a)
             a += 30
-    
-    
-    
-    def move(self, screen, button):
-      
-        for floor in self.__floors:
-            if floor.button.collidepoint(button):
-            # if floor.rect.center[0] + 15 >= button[0] >= floor.rect.center[0] - 15 \
-            #     and floor.rect.center[1] + 15 >= button[1] >= floor.rect.center[1] - 15: 
 
-                    destination =  floor.rect.center[1] 
-                    # - self.__elevator[0].rect.center[1] 
-                    # if destination != 0:
-                    if destination > self.__elevator[0].rect.centery:
-                        screen.fill(color)
-                        
-                        destination *= speed
-                        self.__elevator[0].rect.centery -= destination
-                    
-                    elif destination < self.__elevator[0].rect.centery:
-                        destination *= speed
-                        self.__elevator[0].rect.centery += destination
-                        
-                    else:
-                        pygame.mixer.Sound.play(ding_sound)    
-                        
-                        
-                        # self.__elevator[0].rect.centery = floor.rect.centery
-                        button = None   
 
-                    for elevator in self.__elevator:
-                        screen.blit(elevator.image, elevator.rect) 
-                    for floor in self.__floors:
-                        screen.blit(floor.image, floor.rect)         
-                    for floor in self.__floors:
-                        pygame.draw.line(screen,(0, 0, 0), [40, floor.y - 4], [190, floor.y - 4], width=7)
-                        pygame.draw.circle(screen, (floor.button_color), (115, floor.y + 17), 13)
-                        font = pygame.font.Font(None, 25)
-                        text = font.render(f"{floor.floor_number}", True, (250, 250, 250))
-                        screen.blit(text, (111, floor.y + 10))  
 
-                    # else:
-                    # pygame.mixer.Sound.play(ding_sound)
+    def find_elevator(self, floor):
+        best_elevator = None
+        shortest_time = float('inf')
+        for elevator in self.elevators:
+            if elevator.tasks_queue:
+                last_destination = elevator.tasks_queue[-1]
+            else:
+                last_destination = elevator.rect.centery
             
-                    # return
-                
-       
+            current_distance = abs(floor.rect.centery - last_destination)
+            travel_time = current_distance / (37 * 2)
+
+            current_queue_time = 0
+            for i in range(len(elevator.tasks_queue) - 1):
+                current_queue_time += abs(elevator.tasks_queue[i] - elevator.tasks_queue[i + 1]) / (37 * 2)
+                # current_queue_time += 2  
+
+            total_time = current_queue_time + travel_time
+
+            if total_time < shortest_time:
+                shortest_time = total_time
+                best_elevator = elevator
+
+        if best_elevator:
+            best_elevator.time_to_arrival += shortest_time
+            best_elevator.insert_task(floor.rect.centery)
+            return best_elevator
+
+    def move(self, screen, button, new_click):
+        if new_click:
+            for floor in self.floors:
+                if floor.button.collidepoint(button):
+                    selected_elevator = self.find_elevator(floor)
+                    selected_elevator.insert_task(floor.rect.centery)
+                    floor.timer = True
+                    # floor.show_timer(screen, selected_elevator)
+                    floor.button_color = green
+
+        for elevator in self.elevators:
+            if elevator.tasks_queue:
+                destination = elevator.tasks_queue[0]
+                distance = destination - elevator.rect.centery
+
+                if abs(distance) >= speed:
+                    move_step = speed if distance > 0 else -speed
+                    elevator.rect.centery += move_step
+
+                    print(elevator.time_to_arrival)
+                else:
+                    elevator.rect.centery = destination
+                    pygame.mixer.Sound.play(ding_sound)
+                    elevator.pop_task()
+
+                    for floor in self.floors:
+                        if floor.rect.centery == destination:
+                            floor.button_color = red
+                            floor.timer = None
+
+        for elevator in self.elevators:
+            if elevator.time_to_arrival > 0:
+                elevator.time_to_arrival -= 1 / 74  
+                if elevator.time_to_arrival < 0:
+                    elevator.time_to_arrival = 0
+
+        screen.fill(color)
         
+        for elev in self.elevators:
+            screen.blit(elev.image, elev.rect)
+        
+        for flr in self.floors:
+            screen.blit(flr.image, flr.rect)
+            pygame.draw.line(screen, (0, 0, 0), [40, flr.y - 4], [190, flr.y - 4], width=7)
+            pygame.draw.circle(screen, (flr.button_color), (115, flr.y + 17), 13)
+            font = pygame.font.Font(None, 25)
+            text = font.render(f"{flr.floor_number}", True, (250, 250, 250))
+            screen.blit(text, (111, flr.y + 10))
+
+            for elevator in self.elevators:
+                if flr.timer:
+                    if elevator.time_to_arrival > 0:
+                        time_text = font.render(f"{elevator.time_to_arrival:.1f}", True, (250, 250, 250))
+                        screen.blit(time_text, (10, flr.y + 10))  
+            
+        
+        pygame.display.flip()
+        pygame.time.Clock().tick(74)
+
+
+
+
