@@ -1,18 +1,12 @@
 import pygame 
-from class_building import Building
-from class_elevator import Elevator
-from class_floor import Floor
+from building import Building
+from elevator import Elevator
+from floor import Floor
 pygame.init()
 
-# num_floors = int(input("choose a number of floors:"))
-# while not 0 < num_floors <= 25:
-#     num_floors = int(input(" please choose a number between 0 and 50:"))
-# num_elevators = int(input("choose a number of elevators:")) 
-# while not 0 < num_elevators <= 10 :
-#     num_floors = int(input(" please choose a number between 0 and 30:"))
   
 num_floors = 15
-num_elevators = 6
+num_elevators = 4
 
 
 # def_colors
